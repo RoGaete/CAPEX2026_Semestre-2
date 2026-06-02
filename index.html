@@ -13,17 +13,26 @@
   header h1 { font-size: 1.2rem; font-weight: 600; }
   header span { font-size: 0.85rem; opacity: 0.7; }
   .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .filtros { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filtro-btn { padding: 6px 16px; border-radius: 20px; border: 1px solid #e5e7eb; background: white; font-size: 13px; cursor: pointer; color: #374151; transition: all .15s; }
+  .filtro-btn:hover { background: #f3f4f6; }
+  .filtro-btn.active { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
   .kpi { background: white; border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid #e5e7eb; }
-  .kpi .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
-  .kpi .value { font-size: 24px; font-weight: 600; }
-  .kpi .sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+  .kpi .label { font-size: 11px; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .kpi .value { font-size: 22px; font-weight: 600; }
+  .kpi .sub { font-size: 11px; color: #9ca3af; margin-top: 4px; }
   .kpi.verde .value { color: #059669; }
   .kpi.amarillo .value { color: #d97706; }
   .kpi.azul .value { color: #2563eb; }
+  .kpi.rojo .value { color: #dc2626; }
+  .progress-wrap { margin-top: 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #9ca3af; margin-bottom: 3px; }
+  .progress-bar { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 6px; border-radius: 3px; transition: width .5s; }
   .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
   .card { background: white; border-radius: 12px; padding: 1.2rem 1.5rem; border: 1px solid #e5e7eb; }
-  .card h3 { font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1rem; }
+  .card h3 { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 1rem; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   th { font-size: 11px; color: #9ca3af; text-align: left; padding: 8px; border-bottom: 1px solid #f3f4f6; font-weight: 500; }
   td { padding: 10px 8px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
@@ -32,8 +41,14 @@
   .badge.pendiente { background: #fef3c7; color: #92400e; }
   .badge.adjudicado { background: #d1fae5; color: #065f46; }
   .badge.vencido { background: #fee2e2; color: #991b1b; }
+  .badge.en-proceso { background: #dbeafe; color: #1e40af; }
   .btn-edit { background: none; border: 1px solid #e5e7eb; border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: #374151; }
   .btn-edit:hover { background: #f3f4f6; }
+  .resumen-ejecutores { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .ejec-card { background: white; border-radius: 12px; padding: 1rem 1.25rem; border: 1px solid #e5e7eb; }
+  .ejec-card .ejec-nombre { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .ejec-card .ejec-row { display: flex; justify-content: space-between; font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+  .ejec-card .ejec-row span:last-child { color: #1a1a2e; font-weight: 500; }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
   .modal-overlay.active { display: flex; }
   .modal { background: white; border-radius: 16px; padding: 2rem; width: 500px; max-width: 95vw; max-height: 90vh; overflow-y: auto; }
@@ -56,6 +71,15 @@
 </header>
 
 <div class="container">
+
+  <div class="filtros">
+    <button class="filtro-btn active" onclick="filtrar('Todos', this)">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('DSI', this)">DSI</button>
+    <button class="filtro-btn" onclick="filtrar('Sede', this)">Sede</button>
+    <button class="filtro-btn" onclick="filtrar('CC', this)">CC</button>
+    <button class="filtro-btn" onclick="filtrar('DGSD', this)">DGSD</button>
+  </div>
+
   <div class="kpis">
     <div class="kpi azul">
       <div class="label">Presupuesto total</div>
@@ -63,35 +87,50 @@
       <div class="sub">CLP Q2 2026</div>
     </div>
     <div class="kpi verde">
-      <div class="label">Adjudicado</div>
+      <div class="label">Monto adjudicado</div>
       <div class="value" id="kpi-adj">—</div>
       <div class="sub" id="kpi-adj-sub">— proyectos</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>% presupuesto ejecutado</span><span id="pct-ppto">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="bar-ppto" style="background:#059669;width:0%"></div></div>
+      </div>
     </div>
     <div class="kpi amarillo">
       <div class="label">Remanente</div>
       <div class="value" id="kpi-rem">—</div>
-      <div class="sub" id="kpi-rem-sub">— proyectos pendientes</div>
+      <div class="sub" id="kpi-rem-sub">— pendientes</div>
     </div>
     <div class="kpi">
-      <div class="label">Total proyectos</div>
-      <div class="value" id="kpi-count">—</div>
-      <div class="sub">ítems registrados</div>
+      <div class="label">Proyectos adjudicados</div>
+      <div class="value" id="kpi-nadj">—</div>
+      <div class="sub" id="kpi-nadj-sub">de — proyectos</div>
+      <div class="progress-wrap">
+        <div class="progress-label"><span>% proyectos adjudicados</span><span id="pct-nproj">0%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="bar-nproj" style="background:#2563eb;width:0%"></div></div>
+      </div>
+    </div>
+    <div class="kpi rojo">
+      <div class="label">Proyectos vencidos</div>
+      <div class="value" id="kpi-venc">—</div>
+      <div class="sub">sin adjudicar</div>
     </div>
   </div>
+
+  <div class="resumen-ejecutores" id="resumen-ejecutores"></div>
 
   <div class="charts">
     <div class="card">
       <h3>Presupuesto por tipo de ítem</h3>
-      <div style="position:relative;height:220px"><canvas id="chartTipo" role="img" aria-label="Presupuesto por tipo"></canvas></div>
+      <div style="position:relative;height:220px"><canvas id="chartTipo" role="img" aria-label="Por tipo"></canvas></div>
     </div>
     <div class="card">
-      <h3>Presupuesto por ejecutor</h3>
-      <div style="position:relative;height:220px"><canvas id="chartEjec" role="img" aria-label="Presupuesto por ejecutor"></canvas></div>
+      <h3>Ejecución por ejecutor</h3>
+      <div style="position:relative;height:220px"><canvas id="chartEjec" role="img" aria-label="Por ejecutor"></canvas></div>
     </div>
   </div>
 
   <div class="card">
-    <h3>Proyectos — gestión de contratos</h3>
+    <h3 id="tabla-titulo">Todos los proyectos</h3>
     <table>
       <thead>
         <tr>
@@ -115,7 +154,7 @@
 
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h2 id="modal-titulo">Editar proyecto</h2>
+    <h2>Editar proyecto</h2>
     <input type="hidden" id="edit-id">
     <div class="form-group">
       <label>Nombre del proyecto</label>
@@ -170,44 +209,99 @@ const SUPABASE_URL = 'https://hsbopdblevyaybfhpelp.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_HJlikWMPTZMC0ZHmfmHQLw_V1rkYDqM';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const fmt = n => n ? '$' + Math.round(n/1000000*10)/10 + ' M' : '—';
+const fmt = n => n ? '$' + (Math.round(n/100000)/10).toLocaleString('es-CL') + ' M' : '—';
 const fmtK = n => n ? '$' + Math.round(n/1000).toLocaleString('es-CL') + ' K' : '—';
-let proyectos = [];
+const colors = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2'];
+let todos = [];
+let filtroActivo = 'Todos';
+let chartTipo, chartEjec;
 
 document.getElementById('fecha').textContent = new Date().toLocaleDateString('es-CL', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
 
 async function cargar() {
   const { data, error } = await sb.from('proyectos').select('*').order('presupuesto', { ascending: false });
   if (error) { console.error(error); return; }
-  proyectos = data;
-  renderKPIs();
-  renderTabla();
-  renderCharts();
+  todos = data;
+  render();
 }
 
-function renderKPIs() {
-  const total = proyectos.reduce((s, p) => s + (p.presupuesto || 0), 0);
-  const adj = proyectos.filter(p => p.estado === 'Adjudicado');
-  const totalAdj = adj.reduce((s, p) => s + (p.monto_adjudicado || 0), 0);
-  const pend = proyectos.filter(p => p.estado === 'Pendiente').length;
+function filtrar(ejec, btn) {
+  filtroActivo = ejec;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const data = filtroActivo === 'Todos' ? todos : todos.filter(p => p.ejecutor === filtroActivo);
+  document.getElementById('tabla-titulo').textContent = filtroActivo === 'Todos' ? 'Todos los proyectos' : 'Proyectos — ejecutor: ' + filtroActivo;
+  renderKPIs(data);
+  renderResumenEjecutores(todos);
+  renderTabla(data);
+  renderCharts(data);
+}
+
+function renderKPIs(data) {
+  const total = data.reduce((s, p) => s + (p.presupuesto || 0), 0);
+  const adjList = data.filter(p => p.estado === 'Adjudicado' || p.estado === 'Completado');
+  const totalAdj = adjList.reduce((s, p) => s + (p.monto_adjudicado || 0), 0);
+  const hoy = new Date();
+  const vencidos = data.filter(p => p.estado === 'Pendiente' && p.fecha_termino && new Date(p.fecha_termino) < hoy).length;
+  const pctPpto = total > 0 ? Math.round(totalAdj / total * 100) : 0;
+  const pctN = data.length > 0 ? Math.round(adjList.length / data.length * 100) : 0;
+
   document.getElementById('kpi-total').textContent = fmt(total);
   document.getElementById('kpi-adj').textContent = fmt(totalAdj);
-  document.getElementById('kpi-adj-sub').textContent = adj.length + ' proyectos';
+  document.getElementById('kpi-adj-sub').textContent = adjList.length + ' proyectos';
   document.getElementById('kpi-rem').textContent = fmt(total - totalAdj);
-  document.getElementById('kpi-rem-sub').textContent = pend + ' proyectos pendientes';
-  document.getElementById('kpi-count').textContent = proyectos.length;
+  document.getElementById('kpi-rem-sub').textContent = (data.length - adjList.length) + ' pendientes';
+  document.getElementById('kpi-nadj').textContent = adjList.length;
+  document.getElementById('kpi-nadj-sub').textContent = 'de ' + data.length + ' proyectos';
+  document.getElementById('kpi-venc').textContent = vencidos;
+  document.getElementById('pct-ppto').textContent = pctPpto + '%';
+  document.getElementById('bar-ppto').style.width = pctPpto + '%';
+  document.getElementById('pct-nproj').textContent = pctN + '%';
+  document.getElementById('bar-nproj').style.width = pctN + '%';
+}
+
+function renderResumenEjecutores(data) {
+  const ejecutores = [...new Set(data.map(p => p.ejecutor).filter(Boolean))];
+  const div = document.getElementById('resumen-ejecutores');
+  div.innerHTML = ejecutores.map(e => {
+    const ps = data.filter(p => p.ejecutor === e);
+    const total = ps.reduce((s, p) => s + (p.presupuesto || 0), 0);
+    const adj = ps.filter(p => p.estado === 'Adjudicado' || p.estado === 'Completado');
+    const totalAdj = adj.reduce((s, p) => s + (p.monto_adjudicado || 0), 0);
+    const pctP = total > 0 ? Math.round(totalAdj / total * 100) : 0;
+    const pctN = ps.length > 0 ? Math.round(adj.length / ps.length * 100) : 0;
+    return `<div class="ejec-card">
+      <div class="ejec-nombre">${e}</div>
+      <div class="ejec-row"><span>Proyectos</span><span>${ps.length}</span></div>
+      <div class="ejec-row"><span>Presupuesto</span><span>${fmt(total)}</span></div>
+      <div class="ejec-row"><span>Adjudicado</span><span>${fmt(totalAdj)}</span></div>
+      <div class="progress-wrap" style="margin-top:8px">
+        <div class="progress-label"><span>% N° proyectos</span><span>${pctN}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="background:#2563eb;width:${pctN}%"></div></div>
+      </div>
+      <div class="progress-wrap" style="margin-top:6px">
+        <div class="progress-label"><span>% presupuesto</span><span>${pctP}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="background:#059669;width:${pctP}%"></div></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function estadoBadge(p) {
   const hoy = new Date();
   if (p.estado === 'Adjudicado') return '<span class="badge adjudicado">Adjudicado</span>';
+  if (p.estado === 'Completado') return '<span class="badge adjudicado">Completado</span>';
+  if (p.estado === 'En proceso') return '<span class="badge en-proceso">En proceso</span>';
   if (p.fecha_termino && new Date(p.fecha_termino) < hoy) return '<span class="badge vencido">Vencido</span>';
   return '<span class="badge pendiente">Pendiente</span>';
 }
 
-function renderTabla() {
-  const tbody = document.getElementById('tabla-body');
-  tbody.innerHTML = proyectos.map(p => `
+function renderTabla(data) {
+  document.getElementById('tabla-body').innerHTML = data.map(p => `
     <tr>
       <td style="font-size:11px;color:#9ca3af">${p.id_solicitud || ''}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nombre || ''}</td>
@@ -215,7 +309,7 @@ function renderTabla() {
       <td>${p.ejecutor || ''}</td>
       <td style="font-size:11px;color:#9ca3af">${p.oco || ''}</td>
       <td>${fmtK(p.presupuesto)}</td>
-      <td style="color:#374151">${p.proveedor || '<span style="color:#d1d5db">—</span>'}</td>
+      <td>${p.proveedor || '<span style="color:#d1d5db">—</span>'}</td>
       <td>${p.monto_adjudicado ? fmtK(p.monto_adjudicado) : '<span style="color:#d1d5db">—</span>'}</td>
       <td style="font-size:12px">${p.fecha_termino || '<span style="color:#d1d5db">—</span>'}</td>
       <td>${estadoBadge(p)}</td>
@@ -223,14 +317,15 @@ function renderTabla() {
     </tr>`).join('');
 }
 
-let chartTipo, chartEjec;
-function renderCharts() {
-  const tipoData = {}, ejecData = {};
-  proyectos.forEach(p => {
+function renderCharts(data) {
+  const tipoData = {}, ejecAdj = {}, ejecTotal = {};
+  data.forEach(p => {
     tipoData[p.tipo_item] = (tipoData[p.tipo_item] || 0) + (p.presupuesto || 0);
-    ejecData[p.ejecutor] = (ejecData[p.ejecutor] || 0) + (p.presupuesto || 0);
+    ejecTotal[p.ejecutor] = (ejecTotal[p.ejecutor] || 0) + (p.presupuesto || 0);
+    if (p.estado === 'Adjudicado' || p.estado === 'Completado') {
+      ejecAdj[p.ejecutor] = (ejecAdj[p.ejecutor] || 0) + (p.monto_adjudicado || 0);
+    }
   });
-  const colors = ['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2'];
   if (chartTipo) chartTipo.destroy();
   if (chartEjec) chartEjec.destroy();
   chartTipo = new Chart(document.getElementById('chartTipo'), {
@@ -238,15 +333,29 @@ function renderCharts() {
     data: { labels: Object.keys(tipoData), datasets: [{ data: Object.values(tipoData), backgroundColor: colors, borderWidth: 0 }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } } }
   });
+  const ejecutores = Object.keys(ejecTotal);
   chartEjec = new Chart(document.getElementById('chartEjec'), {
     type: 'bar',
-    data: { labels: Object.keys(ejecData), datasets: [{ data: Object.values(ejecData), backgroundColor: colors, borderRadius: 6, borderWidth: 0 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { ticks: { callback: v => '$' + Math.round(v/1000000) + 'M', font: { size: 11 } }, grid: { color: '#f3f4f6' } } } }
+    data: {
+      labels: ejecutores,
+      datasets: [
+        { label: 'Presupuesto', data: ejecutores.map(e => ejecTotal[e] || 0), backgroundColor: '#dbeafe', borderRadius: 4, borderWidth: 0 },
+        { label: 'Adjudicado', data: ejecutores.map(e => ejecAdj[e] || 0), backgroundColor: '#2563eb', borderRadius: 4, borderWidth: 0 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { ticks: { callback: v => '$' + Math.round(v/1000000) + 'M', font: { size: 11 } }, grid: { color: '#f3f4f6' } }
+      }
+    }
   });
 }
 
 function abrirModal(id) {
-  const p = proyectos.find(x => x.id === id);
+  const p = todos.find(x => x.id === id);
   document.getElementById('edit-id').value = p.id;
   document.getElementById('edit-nombre').value = p.nombre || '';
   document.getElementById('edit-proveedor').value = p.proveedor || '';
@@ -259,9 +368,7 @@ function abrirModal(id) {
   document.getElementById('modal').classList.add('active');
 }
 
-function cerrarModal() {
-  document.getElementById('modal').classList.remove('active');
-}
+function cerrarModal() { document.getElementById('modal').classList.remove('active'); }
 
 async function guardar() {
   const id = parseInt(document.getElementById('edit-id').value);
